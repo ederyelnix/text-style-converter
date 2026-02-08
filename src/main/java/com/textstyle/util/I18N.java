@@ -1,17 +1,23 @@
 package com.textstyle.util;
 
+import java.io.*;
 import java.text.MessageFormat;
 import java.util.*;
 
 /**
  * Internationalization manager for the application.
- * Handles loading and accessing translated messages.
+ * Handles loading and accessing translated messages with locale persistence.
+ * Version 2.0.1 - Added locale preference saving
  */
 public class I18N {
     private static final String BUNDLE_NAME = "i18n.messages";
     private static ResourceBundle bundle;
     private static Locale currentLocale;
     private static final List<LocaleChangeListener> listeners = new ArrayList<>();
+    
+    // Locale preference file
+    private static final String PREFERENCES_FILE = System.getProperty("user.home") + 
+                                                   "/.textstyle_preferences.txt";
     
     // Supported locales
     public static final Locale FRENCH = new Locale("fr");
@@ -24,18 +30,59 @@ public class I18N {
     );
     
     static {
-        // Initialize with system locale or French as default
-        Locale systemLocale = Locale.getDefault();
-        Locale initialLocale = FRENCH; // Default
+        // Initialize with saved locale or system locale or French as default
+        Locale initialLocale = loadSavedLocale();
         
-        for (Locale supported : SUPPORTED_LOCALES) {
-            if (supported.getLanguage().equals(systemLocale.getLanguage())) {
-                initialLocale = supported;
-                break;
+        if (initialLocale == null) {
+            Locale systemLocale = Locale.getDefault();
+            initialLocale = FRENCH; // Default
+            
+            for (Locale supported : SUPPORTED_LOCALES) {
+                if (supported.getLanguage().equals(systemLocale.getLanguage())) {
+                    initialLocale = supported;
+                    break;
+                }
             }
         }
         
         setLocale(initialLocale);
+    }
+    
+    /**
+     * Loads the saved locale from preferences file.
+     */
+    private static Locale loadSavedLocale() {
+        File file = new File(PREFERENCES_FILE);
+        if (!file.exists()) {
+            return null;
+        }
+        
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String languageCode = reader.readLine();
+            if (languageCode != null && !languageCode.trim().isEmpty()) {
+                for (Locale locale : SUPPORTED_LOCALES) {
+                    if (locale.getLanguage().equals(languageCode.trim())) {
+                        return locale;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to load locale preference: " + e.getMessage());
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Saves the current locale to preferences file.
+     */
+    private static void saveLocale(Locale locale) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(PREFERENCES_FILE))) {
+            writer.write(locale.getLanguage());
+            writer.newLine();
+        } catch (IOException e) {
+            System.err.println("Failed to save locale preference: " + e.getMessage());
+        }
     }
     
     /**
@@ -76,7 +123,7 @@ public class I18N {
     }
     
     /**
-     * Changes the current locale.
+     * Changes the current locale and saves it to preferences.
      */
     public static void setLocale(Locale locale) {
         if (!SUPPORTED_LOCALES.contains(locale)) {
@@ -87,6 +134,9 @@ public class I18N {
         currentLocale = locale;
         bundle = ResourceBundle.getBundle(BUNDLE_NAME, locale);
         Locale.setDefault(locale);
+        
+        // Save locale preference
+        saveLocale(locale);
         
         notifyListeners();
     }
@@ -170,7 +220,6 @@ public class I18N {
     }
     
     public static String paginationInfo(int page, int total, int results) {
-        // Use get() with MessageFormat instead of getPlural()
         String key = (results <= 1) ? "pagination.info" : "pagination.infoPlural";
         return get(key, page, total, results);
     }

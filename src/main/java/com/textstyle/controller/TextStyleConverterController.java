@@ -28,7 +28,7 @@ import java.util.*;
 
 /**
  * Main controller for the Text Style Converter application.
- * Fully internationalized with support for French, English, Spanish, and Portuguese.
+ * Version 2.0.1 - Responsive cards and improved result ordering
  */
 public class TextStyleConverterController implements Initializable {
     
@@ -72,6 +72,33 @@ public class TextStyleConverterController implements Initializable {
     private static final String UNICODE_FONT_FAMILY = "Noto Sans, Noto Sans Math, " +
                                                      "Noto Sans Symbols, Noto Sans Symbols 2, " +
                                                      "Noto Color Emoji, STIX Two Math";
+    
+    // Priority order grouped by font families for better organization
+    private static final List<String> PRIORITY_STYLES = Arrays.asList(
+        // Serif family (4 variants)
+        "serifNormal", "serifBold", "serifItalic", "serifBoldItalic",
+        // Sans-Serif family (4 variants)
+        "sansSerifNormal", "sansSerifBold", "sansSerifItalic", "sansSerifBoldItalic",
+        // Script family (2 variants)
+        "scriptNormal", "scriptBold",
+        // Fraktur family (2 variants)
+        "frakturNormal", "frakturBold",
+        // Mathematical family
+        "monospace", "doubleStruck", "mathBold", "mathBoldItalic",
+        // Circled family (4 variants)
+        "circled", "circledNegative", "bubble", "bubbleNegative",
+        // Squared family (2 variants)
+        "squared", "squaredNegative",
+        // Decoration family
+        "strikethrough", "underline", "overline", "doubleUnderline", "slashed",
+        // Transform family
+        "superscript", "subscript", "smallCaps", "tiny",
+        "fullwidth", "parenthesized", "upsideDown", "reversed", "wide",
+        // Special family
+        "currency", "medieval", "asianStyle", "regionalFlags", "curly",
+        // Glitch family
+        "cute", "zalgoLight", "zalgoHeavy"
+    );
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -194,7 +221,7 @@ public class TextStyleConverterController implements Initializable {
         
         task.setOnSucceeded(e -> {
             currentResults = task.getValue();
-            filteredResults = new ArrayList<>(currentResults.entrySet());
+            filteredResults = sortResultsByPriority(new ArrayList<>(currentResults.entrySet()));
             currentPage = 1;
             hasGeneratedResults = true;
             
@@ -217,6 +244,23 @@ public class TextStyleConverterController implements Initializable {
         });
         
         new Thread(task).start();
+    }
+    
+    /**
+     * Sorts results by priority to show best styles first
+     */
+    private List<Map.Entry<String, TextStyle>> sortResultsByPriority(List<Map.Entry<String, TextStyle>> results) {
+        results.sort((a, b) -> {
+            int priorityA = PRIORITY_STYLES.indexOf(a.getKey());
+            int priorityB = PRIORITY_STYLES.indexOf(b.getKey());
+            
+            if (priorityA == -1) priorityA = Integer.MAX_VALUE;
+            if (priorityB == -1) priorityB = Integer.MAX_VALUE;
+            
+            return Integer.compare(priorityA, priorityB);
+        });
+        
+        return results;
     }
 
     @FXML
@@ -256,9 +300,9 @@ public class TextStyleConverterController implements Initializable {
         String searchTerm = searchFilter.getText().toLowerCase().trim();
         
         if (searchTerm.isEmpty()) {
-            filteredResults = new ArrayList<>(currentResults.entrySet());
+            filteredResults = sortResultsByPriority(new ArrayList<>(currentResults.entrySet()));
         } else {
-            filteredResults = currentResults.entrySet().stream()
+            List<Map.Entry<String, TextStyle>> filtered = currentResults.entrySet().stream()
                 .filter(entry -> {
                     TextStyle style = entry.getValue();
                     return style.getName().toLowerCase().contains(searchTerm) ||
@@ -266,6 +310,7 @@ public class TextStyleConverterController implements Initializable {
                            style.getCategory().toLowerCase().contains(searchTerm);
                 })
                 .toList();
+            filteredResults = sortResultsByPriority(new ArrayList<>(filtered));
         }
         
         currentPage = 1;
@@ -314,8 +359,6 @@ public class TextStyleConverterController implements Initializable {
         VBox card = new VBox(10);
         card.getStyleClass().add("style-card");
         card.setPadding(new Insets(15));
-        card.setMaxWidth(380);
-        card.setPrefWidth(330);
         
         Label nameLabel = new Label(style.getName());
         nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
