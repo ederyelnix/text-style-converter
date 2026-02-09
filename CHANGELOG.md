@@ -22,7 +22,7 @@ All changes to this project will be documented in this file.
 ## [2.0.3] - 2026-02-09
 
 ### Added
-- Help button in application header (red ❓ button)
+- Help button in application header (yellow ❓ button)
 - Comprehensive help dialog system
 - Multilingual help content in all 4 languages (EN, FR, ES, PT)
 - User guide with step-by-step instructions
