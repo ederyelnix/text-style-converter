@@ -1,23 +1,17 @@
-# Text Style Converter - JavaFX Edition
+# Text Style Converter - JavaFX Edition v2.0.4
 
-Professional Unicode text converter with 43+ styles, perfect for social media, messaging apps, and more. Fully multilingual (English, French, Spanish, Portuguese) and easily extensible.
+Professional Unicode text converter with 43+ styles, featuring an interactive tutorial system that guides users through all features.
 
-## Version 2.0.1 Changes
+## Version 2.0.4 - Interactive Tutorial System
 
-### Card Responsiveness
-- Improved card layout with flexible widths (280px min, 320px pref, 400px max)
-- Better adaptation to window resizing
-- Natural card flow in FlowPane container
+### New Features
+- **Interactive Tutorial** - Step-by-step guided tour on first launch
+- **Visual Highlights** - Yellow highlights show exactly what to do
+- **Contextual Explanations** - Learn each feature when you need it
+- **Copy Feedback** - Visual confirmation when text is copied to clipboard
+- **Help Menu** - Choose between tutorial or user guide
+- **Tutorial Persistence** - Runs once, can be restarted anytime
 
-### Result Ordering
-- Results grouped by font families for better organization
-- Family order: Serif → Sans-Serif → Script → Fraktur → Mathematical → Circled → Squared → Decorations → Transforms → Special → Glitch
-- Coherent visual presentation within each family
-
-### Code Quality
-- Cleaner card creation logic
-- Better separation of concerns
-- More maintainable codebase
 
 ## Features
 
@@ -274,6 +268,20 @@ MIT License - see LICENSE file for details.
 ederyelnix - Developed with JavaFX 21 and Unicode expertise.
 
 ## Version History
+
+- **v2.0.4** - Interactive Tutorial System
+  - Step-by-step guided tour
+  - Visual element highlighting
+  - Copy button feedback
+  - Help menu with options
+  - Tutorial persistence
+
+- **v2.0.3** - Help System
+  - Help button and user guide
+  - Comprehensive documentation
+
+
+- **v2.0.2** bugs fixed
 
 - **v2.0.1** - Responsive Cards & Better Ordering
   - Responsive card layout (min 280px, pref 320px, max 400px)

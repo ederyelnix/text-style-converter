@@ -139,6 +139,18 @@
     -fx-background-color: derive(-info-color, -10%);
 }
 
+.help-button {
+    -fx-background-color: -warning-color;
+    -fx-text-fill: #212529;
+    -fx-font-size: 16px;
+    -fx-padding: 8px 14px;
+    -fx-font-weight: bold;
+}
+
+.help-button:hover {
+    -fx-background-color: derive(-warning-color, -10%);
+}
+
 /* ===== TEXT INPUTS ===== */
 .text-area, .text-field {
     -fx-background-color: white;

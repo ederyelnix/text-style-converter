@@ -19,16 +19,19 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.effect.DropShadow;
+import javafx.animation.PauseTransition;
+import javafx.util.Duration;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.util.*;
 
 /**
  * Main controller for the Text Style Converter application.
- * Version 2.0.1 - Responsive cards and improved result ordering
+ * Version 2.0.4 - Interactive tutorial system
  */
 public class TextStyleConverterController implements Initializable {
     
@@ -47,6 +50,8 @@ public class TextStyleConverterController implements Initializable {
     @FXML private Button clearHistoryBtn;
     @FXML private Button exportHistoryBtn;
     @FXML private Button toggleHistoryBtn;
+    @FXML private Button helpBtn;
+    @FXML private BorderPane rootPane;
     
     // I18N FXML fields
     @FXML private Text titleText;
@@ -69,34 +74,28 @@ public class TextStyleConverterController implements Initializable {
     private int resultsPerPage = 12;
     private boolean hasGeneratedResults = false;
     
+    // Tutorial system
+    private TutorialOverlay tutorialOverlay;
+    private static final String TUTORIAL_PREF_FILE = System.getProperty("user.home") + 
+                                                      "/.textstyle_tutorial_done.txt";
+    
     private static final String UNICODE_FONT_FAMILY = "Noto Sans, Noto Sans Math, " +
                                                      "Noto Sans Symbols, Noto Sans Symbols 2, " +
                                                      "Noto Color Emoji, STIX Two Math";
     
-    // Priority order grouped by font families for better organization
+    // Priority order grouped by font families
     private static final List<String> PRIORITY_STYLES = Arrays.asList(
-        // Serif family (4 variants)
         "serifNormal", "serifBold", "serifItalic", "serifBoldItalic",
-        // Sans-Serif family (4 variants)
         "sansSerifNormal", "sansSerifBold", "sansSerifItalic", "sansSerifBoldItalic",
-        // Script family (2 variants)
         "scriptNormal", "scriptBold",
-        // Fraktur family (2 variants)
         "frakturNormal", "frakturBold",
-        // Mathematical family
         "monospace", "doubleStruck", "mathBold", "mathBoldItalic",
-        // Circled family (4 variants)
         "circled", "circledNegative", "bubble", "bubbleNegative",
-        // Squared family (2 variants)
         "squared", "squaredNegative",
-        // Decoration family
         "strikethrough", "underline", "overline", "doubleUnderline", "slashed",
-        // Transform family
         "superscript", "subscript", "smallCaps", "tiny",
         "fullwidth", "parenthesized", "upsideDown", "reversed", "wide",
-        // Special family
         "currency", "medieval", "asianStyle", "regionalFlags", "curly",
-        // Glitch family
         "cute", "zalgoLight", "zalgoHeavy"
     );
 
@@ -113,7 +112,12 @@ public class TextStyleConverterController implements Initializable {
         loadHistory();
         updateAllTexts(I18N.getCurrentLocale());
         
-        Platform.runLater(() -> textInput.requestFocus());
+        Platform.runLater(() -> {
+            textInput.requestFocus();
+            if (!isTutorialCompleted()) {
+                startTutorial();
+            }
+        });
     }
 
     private void setupControls() {
@@ -141,6 +145,7 @@ public class TextStyleConverterController implements Initializable {
         textInput.textProperty().addListener((obs, oldVal, newVal) -> updateCharCount());
         convertBtn.setOnAction(e -> convertText());
         clearBtn.setOnAction(e -> clearInput());
+        helpBtn.setOnAction(e -> showHelpMenu());
         
         searchFilter.textProperty().addListener((obs, oldVal, newVal) -> {
             if (hasGeneratedResults) filterAndPaginate();
@@ -185,6 +190,7 @@ public class TextStyleConverterController implements Initializable {
         toggleHistoryBtn.setText("📜 " + I18N.get("section.history"));
         clearHistoryBtn.setText("🗑️ " + I18N.get("btn.clearHistory"));
         exportHistoryBtn.setText("📥 " + I18N.get("btn.export"));
+        helpBtn.setText("❓");
         
         updateCharCount();
         updateUIState();
@@ -246,9 +252,6 @@ public class TextStyleConverterController implements Initializable {
         new Thread(task).start();
     }
     
-    /**
-     * Sorts results by priority to show best styles first
-     */
     private List<Map.Entry<String, TextStyle>> sortResultsByPriority(List<Map.Entry<String, TextStyle>> results) {
         results.sort((a, b) -> {
             int priorityA = PRIORITY_STYLES.indexOf(a.getKey());
@@ -391,7 +394,10 @@ public class TextStyleConverterController implements Initializable {
         
         Button copyBtn = new Button("📋 " + I18N.btnCopy());
         copyBtn.getStyleClass().add("copy-button");
-        copyBtn.setOnAction(e -> copyToClipboard(convertedText, style.getName()));
+        copyBtn.setOnAction(e -> {
+            copyToClipboard(convertedText, style.getName());
+            showCopiedFeedback(copyBtn);
+        });
         
         Button viewBtn = new Button("👁 " + I18N.btnView());
         viewBtn.getStyleClass().add("view-button");
@@ -405,6 +411,19 @@ public class TextStyleConverterController implements Initializable {
         card.getChildren().addAll(nameLabel, descLabel, previewLabel, buttonsBox, categoryLabel);
         
         return card;
+    }
+
+    private void showCopiedFeedback(Button button) {
+        String originalText = button.getText();
+        button.setText("✓ " + I18N.get("tutorial.copied"));
+        button.setStyle("-fx-background-color: #28a745;");
+        
+        PauseTransition pause = new PauseTransition(Duration.seconds(2));
+        pause.setOnFinished(e -> {
+            button.setText(originalText);
+            button.setStyle("");
+        });
+        pause.play();
     }
 
     private void showFullTextDialog(String styleName, String fullText) {
@@ -725,6 +744,346 @@ public class TextStyleConverterController implements Initializable {
                 Thread.currentThread().interrupt();
             }
         }).start();
+    }
+
+    // ===== TUTORIAL SYSTEM =====
+    
+    private boolean isTutorialCompleted() {
+        File file = new File(TUTORIAL_PREF_FILE);
+        return file.exists();
+    }
+    
+    private void markTutorialCompleted() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(TUTORIAL_PREF_FILE))) {
+            writer.write("completed");
+        } catch (IOException e) {
+            System.err.println("Failed to save tutorial preference: " + e.getMessage());
+        }
+    }
+    
+    private void showHelpMenu() {
+        ContextMenu menu = new ContextMenu();
+        
+        MenuItem tutorialItem = new MenuItem(I18N.get("help.startTutorial"));
+        tutorialItem.setOnAction(e -> startTutorial());
+        
+        MenuItem guideItem = new MenuItem(I18N.get("help.userGuide"));
+        guideItem.setOnAction(e -> showHelpDialog());
+        
+        menu.getItems().addAll(tutorialItem, new SeparatorMenuItem(), guideItem);
+        menu.show(helpBtn, javafx.geometry.Side.BOTTOM, 0, 0);
+    }
+    
+    private void startTutorial() {
+        if (tutorialOverlay != null) {
+            tutorialOverlay.stop();
+        }
+        
+        tutorialOverlay = new TutorialOverlay(rootPane);
+        tutorialOverlay.addStep(textInput, I18N.get("tutorial.step1"), "bottom");
+        tutorialOverlay.addStep(convertBtn, I18N.get("tutorial.step2"), "bottom");
+        tutorialOverlay.addStep(resultsContainer, I18N.get("tutorial.step3"), "top");
+        tutorialOverlay.addStep(toggleHistoryBtn, I18N.get("tutorial.step4"), "bottom");
+        tutorialOverlay.addStep(resultsPerPageCombo, I18N.get("tutorial.step5"), "bottom");
+        tutorialOverlay.addStep(searchFilter, I18N.get("tutorial.step6"), "bottom");
+        
+        tutorialOverlay.setOnComplete(() -> markTutorialCompleted());
+        tutorialOverlay.start();
+    }
+    
+    private void showHelpDialog() {
+        Alert helpDialog = new Alert(Alert.AlertType.INFORMATION);
+        helpDialog.setTitle(I18N.get("help.title"));
+        helpDialog.setHeaderText(I18N.get("help.welcome"));
+        
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPrefViewportHeight(450);
+        scrollPane.setPrefViewportWidth(600);
+        
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(15));
+        content.setStyle("-fx-font-family: 'Segoe UI', 'Noto Sans', sans-serif;");
+        
+        Label descriptionLabel = new Label(I18N.get("help.description"));
+        descriptionLabel.setWrapText(true);
+        descriptionLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #555;");
+        
+        VBox howToBox = createHelpSection(
+            I18N.get("help.howto.title"),
+            I18N.get("help.howto.1") + "\n" +
+            I18N.get("help.howto.2") + "\n" +
+            I18N.get("help.howto.3") + "\n" +
+            I18N.get("help.howto.4") + "\n" +
+            I18N.get("help.howto.5")
+        );
+        
+        VBox featuresBox = createHelpSection(
+            I18N.get("help.features.title"),
+            I18N.get("help.features.history") + "\n" +
+            I18N.get("help.features.search") + "\n" +
+            I18N.get("help.features.pagination") + "\n" +
+            I18N.get("help.features.export") + "\n" +
+            I18N.get("help.features.multilingual")
+        );
+        
+        VBox shortcutsBox = createHelpSection(
+            I18N.get("help.shortcuts.title"),
+            I18N.get("help.shortcuts.generate")
+        );
+        
+        VBox compatibilityBox = createHelpSection(
+            I18N.get("help.compatibility.title"),
+            I18N.get("help.compatibility.text")
+        );
+        
+        Label versionLabel = new Label(I18N.get("help.version"));
+        versionLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #999; -fx-font-style: italic;");
+        
+        content.getChildren().addAll(
+            descriptionLabel,
+            new Separator(),
+            howToBox,
+            new Separator(),
+            featuresBox,
+            new Separator(),
+            shortcutsBox,
+            new Separator(),
+            compatibilityBox,
+            new Separator(),
+            versionLabel
+        );
+        
+        scrollPane.setContent(content);
+        helpDialog.getDialogPane().setContent(scrollPane);
+        
+        helpDialog.showAndWait();
+    }
+    
+    private VBox createHelpSection(String title, String content) {
+        VBox section = new VBox(8);
+        
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #0066cc;");
+        
+        Label contentLabel = new Label(content);
+        contentLabel.setWrapText(true);
+        contentLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #333;");
+        
+        section.getChildren().addAll(titleLabel, contentLabel);
+        return section;
+    }
+
+    // ===== TUTORIAL OVERLAY CLASS =====
+    
+    private static class TutorialOverlay {
+        private final BorderPane rootPane;
+        private final List<TutorialStep> steps;
+        private int currentStep = 0;
+        private Pane overlay;
+        private VBox tooltip;
+        private Rectangle highlight;
+        private Runnable onComplete;
+        private javafx.beans.value.ChangeListener<Number> widthListener;
+        private javafx.beans.value.ChangeListener<Number> heightListener;
+        
+        public TutorialOverlay(BorderPane rootPane) {
+            this.rootPane = rootPane;
+            this.steps = new ArrayList<>();
+        }
+        
+        public void addStep(javafx.scene.Node target, String message, String position) {
+            steps.add(new TutorialStep(target, message, position));
+        }
+        
+        public void setOnComplete(Runnable onComplete) {
+            this.onComplete = onComplete;
+        }
+        
+        public void start() {
+            if (steps.isEmpty()) return;
+            
+            overlay = new Pane();
+            overlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.7);");
+            overlay.setPrefSize(rootPane.getWidth(), rootPane.getHeight());
+            
+            // Add listeners for window resize
+            widthListener = (obs, oldVal, newVal) -> updatePositions();
+            heightListener = (obs, oldVal, newVal) -> updatePositions();
+            
+            rootPane.widthProperty().addListener(widthListener);
+            rootPane.heightProperty().addListener(heightListener);
+            
+            rootPane.getChildren().add(overlay);
+            
+            showCurrentStep();
+        }
+        
+        private void updatePositions() {
+            if (currentStep >= steps.size()) return;
+            
+            // Update overlay size
+            overlay.setPrefSize(rootPane.getWidth(), rootPane.getHeight());
+            
+            // Recalculate and update highlight and tooltip positions
+            Platform.runLater(() -> {
+                overlay.getChildren().clear();
+                showCurrentStepContent();
+            });
+        }
+        
+        private void showCurrentStep() {
+            if (currentStep >= steps.size()) {
+                complete();
+                return;
+            }
+            
+            overlay.getChildren().clear();
+            showCurrentStepContent();
+        }
+        
+        private void showCurrentStepContent() {
+            if (currentStep >= steps.size()) return;
+            
+            TutorialStep step = steps.get(currentStep);
+            
+            javafx.geometry.Bounds bounds = step.target.localToScene(step.target.getBoundsInLocal());
+            
+            // Create highlight rectangle
+            highlight = new Rectangle(
+                bounds.getMinX(), 
+                bounds.getMinY(), 
+                bounds.getWidth(), 
+                bounds.getHeight()
+            );
+            highlight.setFill(Color.TRANSPARENT);
+            highlight.setStroke(Color.YELLOW);
+            highlight.setStrokeWidth(3);
+            highlight.setArcWidth(10);
+            highlight.setArcHeight(10);
+            
+            DropShadow glow = new DropShadow();
+            glow.setColor(Color.YELLOW);
+            glow.setRadius(20);
+            highlight.setEffect(glow);
+            
+            overlay.getChildren().add(highlight);
+            
+            // Create tooltip
+            tooltip = new VBox(15);
+            tooltip.setStyle(
+                "-fx-background-color: white;" +
+                "-fx-padding: 20px;" +
+                "-fx-background-radius: 10px;" +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 2);" +
+                "-fx-max-width: 350px;"
+            );
+            tooltip.setAlignment(Pos.CENTER);
+            
+            Label messageLabel = new Label(step.message);
+            messageLabel.setWrapText(true);
+            messageLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333;");
+            
+            HBox buttons = new HBox(10);
+            buttons.setAlignment(Pos.CENTER);
+            
+            if (currentStep > 0) {
+                Button prevBtn = new Button(I18N.get("tutorial.previous"));
+                prevBtn.setOnAction(e -> {
+                    currentStep--;
+                    showCurrentStep();
+                });
+                buttons.getChildren().add(prevBtn);
+            }
+            
+            Button nextBtn = new Button(
+                currentStep < steps.size() - 1 ? 
+                I18N.get("tutorial.next") : 
+                I18N.get("tutorial.finish")
+            );
+            nextBtn.setStyle("-fx-background-color: #0066cc; -fx-text-fill: white;");
+            nextBtn.setOnAction(e -> {
+                currentStep++;
+                showCurrentStep();
+            });
+            buttons.getChildren().add(nextBtn);
+            
+            Button skipBtn = new Button(I18N.get("tutorial.skip"));
+            skipBtn.setOnAction(e -> complete());
+            buttons.getChildren().add(skipBtn);
+            
+            Label stepCounter = new Label((currentStep + 1) + " / " + steps.size());
+            stepCounter.setStyle("-fx-font-size: 12px; -fx-text-fill: #999;");
+            
+            tooltip.getChildren().addAll(messageLabel, buttons, stepCounter);
+            
+            // Calculate tooltip position
+            double tooltipX, tooltipY;
+            double tooltipWidth = 350;
+            double tooltipHeight = 200;
+            
+            switch (step.position) {
+                case "top":
+                    tooltipX = bounds.getMinX() + bounds.getWidth() / 2 - tooltipWidth / 2;
+                    tooltipY = bounds.getMinY() - tooltipHeight - 20;
+                    break;
+                case "bottom":
+                default:
+                    tooltipX = bounds.getMinX() + bounds.getWidth() / 2 - tooltipWidth / 2;
+                    tooltipY = bounds.getMaxY() + 20;
+                    break;
+            }
+            
+            // Ensure tooltip stays within bounds
+            tooltipX = Math.max(10, Math.min(tooltipX, rootPane.getWidth() - tooltipWidth - 10));
+            tooltipY = Math.max(10, Math.min(tooltipY, rootPane.getHeight() - tooltipHeight - 10));
+            
+            tooltip.setLayoutX(tooltipX);
+            tooltip.setLayoutY(tooltipY);
+            
+            overlay.getChildren().add(tooltip);
+        }
+        
+        private void complete() {
+            // Remove listeners
+            if (widthListener != null) {
+                rootPane.widthProperty().removeListener(widthListener);
+            }
+            if (heightListener != null) {
+                rootPane.heightProperty().removeListener(heightListener);
+            }
+            
+            rootPane.getChildren().remove(overlay);
+            if (onComplete != null) {
+                onComplete.run();
+            }
+        }
+        
+        public void stop() {
+            // Remove listeners
+            if (widthListener != null) {
+                rootPane.widthProperty().removeListener(widthListener);
+            }
+            if (heightListener != null) {
+                rootPane.heightProperty().removeListener(heightListener);
+            }
+            
+            if (overlay != null) {
+                rootPane.getChildren().remove(overlay);
+            }
+        }
+        
+        private static class TutorialStep {
+            javafx.scene.Node target;
+            String message;
+            String position;
+            
+            TutorialStep(javafx.scene.Node target, String message, String position) {
+                this.target = target;
+                this.message = message;
+                this.position = position;
+            }
+        }
     }
 
     private static class LocaleListCell extends ListCell<Locale> {
