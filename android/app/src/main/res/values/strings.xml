@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Text Style Converter</string>
+    
+    <string name="section_input">Enter your text</string>
+    <string name="section_styles">Available styles</string>
+    <string name="section_history">History</string>
+    
+    <string name="input_placeholder">Write your text here</string>
+    <string name="input_char_count">%d characters</string>
+    
+    <string name="btn_generate">Generate styles</string>
+    <string name="btn_clear">Clear</string>
+    <string name="btn_copy">Copy</string>
+    <string name="btn_view">View</string>
+    <string name="btn_edit">Edit</string>
+    <string name="btn_close">Close</string>
+    <string name="btn_ok">OK</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_clear_history">Clear History</string>
+    
+    <string name="pagination_info">Page %1$d of %2$d - %3$d results</string>
+    <string name="pagination_empty">Enter text to begin</string>
+    <string name="pagination_results_per_page">per page</string>
+    
+    <string name="search_placeholder">Search for a style...</string>
+    
+    <string name="history_empty">No history</string>
+    <string name="history_confirm_clear">Do you really want to clear all history?</string>
+    
+    <string name="notif_enter_text">Please enter text</string>
+    <string name="notif_copied">%s copied!</string>
+    <string name="notif_copied_simple">Copied to clipboard</string>
+    <string name="notif_text_cleared">Text cleared</string>
+    <string name="notif_history_cleared">History cleared</string>
+    <string name="notif_styles_generated">%d styles generated</string>
+    
+    <string name="empty_no_text_title">No text converted</string>
+    <string name="empty_no_text_message">Write text above and click Generate styles</string>
+    
+    <string name="dialog_confirmation">Confirmation</string>
+</resources>

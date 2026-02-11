@@ -1,0 +1,3 @@
+-keep class com.textstyle.android.model.** { *; }
+-keep class com.textstyle.android.data.** { *; }
+-keepattributes *Annotation*

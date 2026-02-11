@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Convertidor de estilo de texto</string>
+    
+    <string name="section_input">Introduce tu texto</string>
+    <string name="section_styles">Estilos disponibles</string>
+    <string name="section_history">Historial</string>
+    
+    <string name="input_placeholder">Escribe tu texto aquí</string>
+    <string name="input_char_count">%d caracteres</string>
+    
+    <string name="btn_generate">Generar estilos</string>
+    <string name="btn_clear">Borrar</string>
+    <string name="btn_copy">Copiar</string>
+    <string name="btn_view">Ver</string>
+    <string name="btn_edit">Editar</string>
+    <string name="btn_close">Cerrar</string>
+    <string name="btn_ok">OK</string>
+    <string name="btn_cancel">Cancelar</string>
+    <string name="btn_clear_history">Borrar historial</string>
+    
+    <string name="pagination_info">Página %1$d de %2$d · %3$d resultados</string>
+    <string name="pagination_empty">Introduce texto para empezar</string>
+    <string name="pagination_results_per_page">por página</string>
+    
+    <string name="search_placeholder">Buscar un estilo...</string>
+    
+    <string name="history_empty">Sin historial</string>
+    <string name="history_confirm_clear">¿Seguro que quieres borrar todo el historial?</string>
+    
+    <string name="notif_enter_text">Introduce un texto</string>
+    <string name="notif_copied">¡%s copiado!</string>
+    <string name="notif_copied_simple">Copiado al portapapeles</string>
+    <string name="notif_text_cleared">Texto borrado</string>
+    <string name="notif_history_cleared">Historial borrado</string>
+    <string name="notif_styles_generated">%d estilos generados</string>
+    
+    <string name="empty_no_text_title">Ningún texto convertido</string>
+    <string name="empty_no_text_message">Escribe un texto arriba y pulsa «Generar estilos»</string>
+    
+    <string name="dialog_confirmation">Confirmación</string>
+</resources>

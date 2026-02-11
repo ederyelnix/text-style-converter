@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Convertisseur de style de texte</string>
+    
+    <string name="section_input">Saisissez votre texte</string>
+    <string name="section_styles">Styles disponibles</string>
+    <string name="section_history">Historique</string>
+    
+    <string name="input_placeholder">Écrivez votre texte ici</string>
+    <string name="input_char_count">%d caractères</string>
+    
+    <string name="btn_generate">Générer les styles</string>
+    <string name="btn_clear">Effacer</string>
+    <string name="btn_copy">Copier</string>
+    <string name="btn_view">Afficher</string>
+    <string name="btn_edit">Modifier</string>
+    <string name="btn_close">Fermer</string>
+    <string name="btn_ok">OK</string>
+    <string name="btn_cancel">Annuler</string>
+    <string name="btn_clear_history">Effacer l’historique</string>
+    
+    <string name="pagination_info">Page %1$d sur %2$d - %3$d résultats</string>
+    <string name="pagination_empty">Saisissez du texte pour commencer</string>
+    <string name="pagination_results_per_page">par page</string>
+    
+    <string name="search_placeholder">Rechercher un style...</string>
+    
+    <string name="history_empty">Aucun historique</string>
+    <string name="history_confirm_clear">Voulez-vous vraiment effacer tout l’historique ?</string>
+    
+    <string name="notif_enter_text">Veuillez saisir un texte</string>
+    <string name="notif_copied">%s copié !</string>
+    <string name="notif_copied_simple">Copié dans le presse-papiers</string>
+    <string name="notif_text_cleared">Texte effacé</string>
+    <string name="notif_history_cleared">Historique effacé</string>
+    <string name="notif_styles_generated">%d styles générés</string>
+    
+    <string name="empty_no_text_title">Aucun texte converti</string>
+    <string name="empty_no_text_message">Écrivez du texte ci-dessus et cliquez sur « Générer les styles »</string>
+    
+    <string name="dialog_confirmation">Confirmation</string>
+</resources>
